@@ -19,6 +19,7 @@ pub struct App {
     input: String,
     event_rx: mpsc::Receiver<AgentEvent>,
     input_tx: mpsc::Sender<String>,
+    scroll: u16,
 }
 
 impl App {
@@ -28,6 +29,7 @@ impl App {
             input: String::new(),
             event_rx,
             input_tx,
+            scroll: 0,
         }
     }
 
@@ -49,8 +51,16 @@ impl App {
 
                 // Chat History
                 let history_text = self.messages.join("\n");
+                let content_height = self.messages.len() as u16;
+                let inner_height = chunks[0].height.saturating_sub(2);
+                let max_scroll = content_height.saturating_sub(inner_height);
+                
+                // Clamp scroll to valid range
+                self.scroll = self.scroll.min(max_scroll);
+
                 let history = Paragraph::new(history_text)
-                    .block(Block::default().title("Chat History").borders(Borders::ALL));
+                    .block(Block::default().title("Chat History").borders(Borders::ALL))
+                    .scroll((self.scroll, 0));
                 f.render_widget(history, chunks[0]);
 
                 // Input Box
@@ -71,6 +81,8 @@ impl App {
                         AgentEvent::SystemError(err) => self.messages.push(format!("Error: {}", err)),
                         AgentEvent::Shutdown => break,
                     }
+                    // Auto-scroll to bottom on new events
+                    self.scroll = u16::MAX;
                 }
                 
                 // User Input
@@ -85,6 +97,8 @@ impl App {
                                     }
                                     KeyCode::Char(c) => self.input.push(c),
                                     KeyCode::Backspace => { self.input.pop(); },
+                                    KeyCode::Up => self.scroll = self.scroll.saturating_sub(1),
+                                    KeyCode::Down => self.scroll = self.scroll.saturating_add(1),
                                     KeyCode::Esc => return Ok(()),
                                     _ => {}
                                 }
