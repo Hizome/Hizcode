@@ -1,5 +1,5 @@
 use core::Session;
-use tui::App;
+use tui::app::App;
 use tokio::sync::mpsc;
 use protocol::AgentEvent;
 
@@ -20,8 +20,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // 4. Run TUI (Main Thread)
-    let mut app = App::new(event_rx, input_tx);
-    app.run().await?;
+    let app = App::new(event_rx, input_tx);
+    tui::run(app).await?;
 
     Ok(())
 }
