@@ -46,17 +46,25 @@ pub async fn run(mut app: App) -> io::Result<()> {
                if event::poll(std::time::Duration::from_millis(100))? {
                     if let Event::Key(key) = event::read()? {
                         if key.kind == event::KeyEventKind::Press {
-                            match key.code {
-                                KeyCode::Enter => {
-                                    let msg = app.input.drain(..).collect();
-                                    app.input_tx.send(msg).await.unwrap();
+                            if app.show_exit_popup {
+                                match key.code {
+                                    KeyCode::Char('y') | KeyCode::Char('Y') | KeyCode::Enter => break,
+                                    KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => app.show_exit_popup = false,
+                                    _ => {}
                                 }
-                                KeyCode::Char(c) => app.input.push(c),
-                                KeyCode::Backspace => { app.input.pop(); },
-                                KeyCode::Up => app.scroll = app.scroll.saturating_sub(1),
-                                KeyCode::Down => app.scroll = app.scroll.saturating_add(1),
-                                KeyCode::Esc => break, // Break the loop instead of return Ok(()) to ensure cleanup
-                                _ => {}
+                            } else {
+                                match key.code {
+                                    KeyCode::Enter => {
+                                        let msg = app.input.drain(..).collect();
+                                        app.input_tx.send(msg).await.unwrap();
+                                    }
+                                    KeyCode::Char(c) => app.input.push(c),
+                                    KeyCode::Backspace => { app.input.pop(); },
+                                    KeyCode::Up => app.scroll = app.scroll.saturating_sub(1),
+                                    KeyCode::Down => app.scroll = app.scroll.saturating_add(1),
+                                    KeyCode::Esc => app.show_exit_popup = true,
+                                    _ => {}
+                                }
                             }
                         }
                     }

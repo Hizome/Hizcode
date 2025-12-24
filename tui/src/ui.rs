@@ -1,10 +1,12 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Style},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, Paragraph, Clear},
     Frame,
 };
 use crate::app::App;
+#[allow(unused_imports)]
+use ratatui::layout::Rect;
 
 pub fn ui(f: &mut Frame, app: &mut App) {
     let chunks = Layout::default()
@@ -32,4 +34,38 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         .style(Style::default().fg(Color::Yellow))
         .block(Block::default().title("Input").borders(Borders::ALL));
     f.render_widget(input, chunks[1]);
+
+    // Cleanup Popup
+    if app.show_exit_popup {
+        let block = Block::default().title("Quit").borders(Borders::ALL).style(Style::default().bg(Color::Red).fg(Color::White));
+        let area = centered_rect(60, 20, f.area());
+        f.render_widget(Clear, area); //this clears out the background
+        f.render_widget(
+            Paragraph::new("Are you sure you want to quit? (y/n)")
+                .block(block)
+                .alignment(ratatui::layout::Alignment::Center),
+            area,
+        );
+    }
+}
+
+// Helper function to center the popup
+fn centered_rect(percent_x: u16, percent_y: u16, r: ratatui::layout::Rect) -> ratatui::layout::Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
+        .split(r);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(popup_layout[1])[1]
 }

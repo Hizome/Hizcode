@@ -7,6 +7,7 @@ pub struct App {
     pub event_rx: mpsc::Receiver<AgentEvent>,
     pub input_tx: mpsc::Sender<String>,
     pub scroll: u16,
+    pub show_exit_popup: bool,
 }
 
 impl App {
@@ -17,6 +18,7 @@ impl App {
             event_rx,
             input_tx,
             scroll: 0,
+            show_exit_popup: false,
         }
     }
 }
